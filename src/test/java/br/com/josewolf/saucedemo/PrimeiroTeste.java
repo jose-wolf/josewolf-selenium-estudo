@@ -1,66 +1,61 @@
 package br.com.josewolf.saucedemo;
 
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PrimeiroTeste {
 
-    @Test
-    void deveAbrirSauceDemo() {
+    private WebDriver navegador;
+    private WebDriverWait wait;
+    private Actions actions;
 
-        FirefoxOptions options = new FirefoxOptions();
+    @BeforeEach
+    void setUp() {
+        FirefoxOptions firefoxOptions = new FirefoxOptions();
+        firefoxOptions.setBinary("/snap/firefox/current/usr/lib/firefox/firefox");
 
-        options.setBinary(
-                "/snap/firefox/current/usr/lib/firefox/firefox"
-        );
+        navegador = new FirefoxDriver(firefoxOptions);
+        navegador.manage().window().maximize();
+        wait = new WebDriverWait(navegador, Duration.ofSeconds(5));
 
-        options.addArguments("--width=1920");
-        options.addArguments("--height=1000");
-
-        WebDriver navegador = new FirefoxDriver(options);
-
-        WebDriverWait wait = new WebDriverWait(navegador, Duration.ofSeconds(5));
-        try {
-            navegador.get("https://www.saucedemo.com/");
-
-            WebElement campoUsuario = navegador.findElement(By.id("user-name"));
-            WebElement campoPassword = navegador.findElement(By.id("password"));
-
-            Actions actions = new Actions(navegador);
-
-            actions.click(campoUsuario).
-                    sendKeys("standard_user").
-                    perform();
-
-            campoPassword.sendKeys("secret_sauce");
-
-            WebElement botaoLogin =
-                    navegador.findElement(By.id("login-button"));
-
-
-            actions.
-                    doubleClick(botaoLogin).
-                    perform();
-
-            actions.contextClick().perform();
-
-        } finally {
-            navegador.quit();
-
-        }
+        navegador.get("https://www.saucedemo.com/");
     }
 
+    @Test
+    void deveFazerLoginComSucesso(){
+        WebElement campoUsuario =  navegador.findElement(By.cssSelector("[data-test='username']"));
+        WebElement campoPassword =  navegador.findElement(By.cssSelector("[data-test='password']"));
+
+        campoUsuario.sendKeys("standard_user");
+        campoPassword.sendKeys("secret_sauce");
+
+        WebElement botaoLogin = navegador.findElement(By.cssSelector("[data-test='login-button']"));
+
+        botaoLogin.click();
+
+        wait.until(ExpectedConditions.urlContains("inventory.html"));
+        assertEquals("https://www.saucedemo.com/inventory.html", navegador.getCurrentUrl());
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (navegador != null) {
+            navegador.quit();
+        }
+    }
 }
+
