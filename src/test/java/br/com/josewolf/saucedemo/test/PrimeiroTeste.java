@@ -6,12 +6,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -23,6 +20,7 @@ class PrimeiroTeste {
 
     private WebDriver navegador;
     private WebDriverWait wait;
+    private String password = "secret_sauce";
 
     @BeforeEach
     void setUp() {
@@ -39,15 +37,8 @@ class PrimeiroTeste {
     @ParameterizedTest
     @ValueSource(strings = {"standard_user", "error_user", "visual_user"})
     void deveFazerLoginComSucessoStandardUser(String usuario){
-        WebElement campoUsuario =  navegador.findElement(By.cssSelector("[data-test='username']"));
-        WebElement campoPassword =  navegador.findElement(By.cssSelector("[data-test='password']"));
-
-        campoUsuario.sendKeys(usuario);
-        campoPassword.sendKeys("secret_sauce");
-
-        WebElement botaoLogin = navegador.findElement(By.cssSelector("[data-test='login-button']"));
-
-        botaoLogin.click();
+        LoginPage loginPage = new LoginPage(navegador);
+        loginPage.realizarLogin(usuario, password);
 
         wait.until(ExpectedConditions.urlContains("inventory.html"));
         assertEquals("https://www.saucedemo.com/inventory.html", navegador.getCurrentUrl());
@@ -55,20 +46,12 @@ class PrimeiroTeste {
 
     @Test
     void loginLockedUser(){
-        WebElement campoUsuario = navegador.findElement(By.cssSelector("[data-test='username']"));
-        WebElement campoPassword =  navegador.findElement(By.cssSelector("[data-test='password']"));
+        LoginPage loginPage = new LoginPage(navegador);
+        loginPage.realizarLogin("locked_out_user", password);
 
-        campoUsuario.sendKeys("locked_out_user");
-        campoPassword.sendKeys("secret_sauce");
+        assertEquals("Epic sadface: Sorry, this user has been locked out.", loginPage.obterMensagemErro());
+        assertEquals("https://www.saucedemo.com/", navegador.getCurrentUrl());
 
-        WebElement botaoLogin = navegador.findElement(By.cssSelector("[data-test='login-button']"));
-
-        botaoLogin.click();
-        WebElement errorMessage = wait.until(ExpectedConditions.visibilityOfElementLocated
-                (By.cssSelector("[data-test='error']"))
-        );
-
-        assertEquals("Epic sadface: Sorry, this user has been locked out.", errorMessage.getText());
     }
 
     @AfterEach
